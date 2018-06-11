@@ -28,6 +28,7 @@ part 'hooks.dart';
 part 'lerp.dart';
 part 'natives.dart';
 part 'painting.dart';
+part 'plugins.dart';
 part 'pointer.dart';
 part 'semantics.dart';
 part 'text.dart';

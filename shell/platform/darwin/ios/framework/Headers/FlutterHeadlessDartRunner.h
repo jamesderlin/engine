@@ -7,8 +7,18 @@
 
 #import <Foundation/Foundation.h>
 
+#include "FlutterBinaryMessenger.h"
 #include "FlutterDartProject.h"
 #include "FlutterMacros.h"
+
+/**
+A callback for when FlutterHeadlessDartRunner has attempted to start a Dart
+Isolate in the background.
+
+- Parameter success: YES if the Isolate was started and run successfully, NO
+  otherwise.
+*/
+typedef void (^FlutterHeadlessDartRunnerCallback)(BOOL success);
 
 /**
  The FlutterHeadlessDartRunner runs Flutter Dart code with a null rasterizer,
@@ -16,7 +26,7 @@
  code e.g. in the background from a plugin.
 */
 FLUTTER_EXPORT
-@interface FlutterHeadlessDartRunner : NSObject
+@interface FlutterHeadlessDartRunner : NSObject <FlutterBinaryMessenger>
 
 /**
  Runs a Dart function on an Isolate that is not the main application's Isolate.
@@ -28,6 +38,10 @@ FLUTTER_EXPORT
    library that contains the app's main() function.
 */
 - (void)runWithEntrypoint:(NSString*)entrypoint;
+
+- (void)runWithEntrypointAndCallback:(NSString*)entrypoint
+                          libraryUri:(NSString*)uri
+                          completion:(FlutterHeadlessDartRunnerCallback)callback;
 
 @end
 
