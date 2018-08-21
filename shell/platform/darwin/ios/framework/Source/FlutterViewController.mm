@@ -65,11 +65,8 @@
                          bundle:(NSBundle*)nibBundleOrNil {
   self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
   if (self) {
-    if (projectOrNil == nil)
-      _dartProject.reset([[FlutterDartProject alloc] init]);
-    else
-      _dartProject.reset([projectOrNil retain]);
-
+    _dartProject.reset((projectOrNil != nil) ? [projectOrNil retain]
+                                             : [[FlutterDartProject alloc] init]);
     [self performCommonViewControllerInitialization];
   }
 
@@ -91,8 +88,9 @@
 #pragma mark - Common view controller initialization tasks
 
 - (void)performCommonViewControllerInitialization {
-  if (_initialized)
+  if (_initialized) {
     return;
+  }
 
   _initialized = YES;
 
@@ -159,11 +157,8 @@
   };
 
   // Create the shell.
-  _shell = shell::Shell::Create(std::move(task_runners),  //
-                                [_dartProject settings],  //
-                                on_create_platform_view,  //
-                                on_create_rasterizer      //
-  );
+  _shell = shell::Shell::Create(std::move(task_runners), [_dartProject settings],
+                                on_create_platform_view, on_create_rasterizer);
 
   if (!_shell) {
     FML_LOG(ERROR) << "Could not setup a shell to run the Dart application.";
@@ -394,7 +389,6 @@
   if (appeared) {
     [self installLaunchViewCallback];
     _shell->GetPlatformView()->NotifyCreated();
-
   } else {
     _shell->GetPlatformView()->NotifyDestroyed();
   }
@@ -420,8 +414,9 @@
 
   // Only recreate surface on subsequent appearances when viewport metrics are known.
   // First time surface creation is done on viewDidLayoutSubviews.
-  if (_viewportMetrics.physical_width)
+  if (_viewportMetrics.physical_width) {
     [self surfaceUpdated:YES];
+  }
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.inactive"];
 
   [super viewWillAppear:animated];
@@ -478,8 +473,9 @@
 
 - (void)applicationWillEnterForeground:(NSNotification*)notification {
   TRACE_EVENT0("flutter", "applicationWillEnterForeground");
-  if (_viewportMetrics.physical_width)
+  if (_viewportMetrics.physical_width) {
     [self surfaceUpdated:YES];
+  }
   [_lifecycleChannel.get() sendMessage:@"AppLifecycleState.inactive"];
 }
 
@@ -685,8 +681,9 @@ static inline blink::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* to
 
   // This must run after updateViewportMetrics so that the surface creation tasks are queued after
   // the viewport metrics update tasks.
-  if (firstViewBoundsUpdate)
+  if (firstViewBoundsUpdate) {
     [self surfaceUpdated:YES];
+  }
 }
 
 - (void)viewSafeAreaInsetsDidChange {
@@ -812,12 +809,15 @@ static inline blink::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* to
 - (void)onAccessibilityStatusChanged:(NSNotification*)notification {
   auto platformView = _shell->GetPlatformView();
   int32_t flags = 0;
-  if (UIAccessibilityIsInvertColorsEnabled())
+  if (UIAccessibilityIsInvertColorsEnabled()) {
     flags ^= static_cast<int32_t>(blink::AccessibilityFeatureFlag::kInvertColors);
-  if (UIAccessibilityIsReduceMotionEnabled())
+  }
+  if (UIAccessibilityIsReduceMotionEnabled()) {
     flags ^= static_cast<int32_t>(blink::AccessibilityFeatureFlag::kDisableAnimations);
-  if (UIAccessibilityIsBoldTextEnabled())
+  }
+  if (UIAccessibilityIsBoldTextEnabled()) {
     flags ^= static_cast<int32_t>(blink::AccessibilityFeatureFlag::kBoldText);
+  }
 #if TARGET_OS_SIMULATOR
   // There doesn't appear to be any way to determine whether the accessibility
   // inspector is enabled on the simulator. We conservatively always turn on the
@@ -826,8 +826,9 @@ static inline blink::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* to
   platformView->SetAccessibilityFeatures(flags);
 #else
   bool enabled = UIAccessibilityIsVoiceOverRunning() || UIAccessibilityIsSwitchControlRunning();
-  if (UIAccessibilityIsVoiceOverRunning() || UIAccessibilityIsSwitchControlRunning())
+  if (UIAccessibilityIsVoiceOverRunning() || UIAccessibilityIsSwitchControlRunning()) {
     flags ^= static_cast<int32_t>(blink::AccessibilityFeatureFlag::kAccessibleNavigation);
+  }
   platformView->SetSemanticsEnabled(enabled || UIAccessibilityIsSpeakScreenEnabled());
   platformView->SetAccessibilityFeatures(flags);
 #endif
@@ -845,8 +846,9 @@ static inline blink::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* to
   NSLocale* currentLocale = [NSLocale currentLocale];
   NSString* languageCode = [currentLocale objectForKey:NSLocaleLanguageCode];
   NSString* countryCode = [currentLocale objectForKey:NSLocaleCountryCode];
-  if (languageCode && countryCode)
+  if (languageCode && countryCode) {
     [_localizationChannel.get() invokeMethod:@"setLocale" arguments:@[ languageCode, countryCode ]];
+  }
 }
 
 #pragma mark - Set user settings
@@ -882,32 +884,33 @@ static inline blink::PointerData::DeviceKind DeviceKindFromTouchType(UITouch* to
 
   // We compute the scale as relative difference from size L (large, the default size), where
   // L is assumed to have scale 1.0.
-  if ([category isEqualToString:UIContentSizeCategoryExtraSmall])
+  if ([category isEqualToString:UIContentSizeCategoryExtraSmall]) {
     return xs / l;
-  else if ([category isEqualToString:UIContentSizeCategorySmall])
+  } else if ([category isEqualToString:UIContentSizeCategorySmall]) {
     return s / l;
-  else if ([category isEqualToString:UIContentSizeCategoryMedium])
+  } else if ([category isEqualToString:UIContentSizeCategoryMedium]) {
     return m / l;
-  else if ([category isEqualToString:UIContentSizeCategoryLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryLarge]) {
     return 1.0;
-  else if ([category isEqualToString:UIContentSizeCategoryExtraLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryExtraLarge]) {
     return xl / l;
-  else if ([category isEqualToString:UIContentSizeCategoryExtraExtraLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryExtraExtraLarge]) {
     return xxl / l;
-  else if ([category isEqualToString:UIContentSizeCategoryExtraExtraExtraLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryExtraExtraExtraLarge]) {
     return xxxl / l;
-  else if ([category isEqualToString:UIContentSizeCategoryAccessibilityMedium])
+  } else if ([category isEqualToString:UIContentSizeCategoryAccessibilityMedium]) {
     return ax1 / l;
-  else if ([category isEqualToString:UIContentSizeCategoryAccessibilityLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryAccessibilityLarge]) {
     return ax2 / l;
-  else if ([category isEqualToString:UIContentSizeCategoryAccessibilityExtraLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryAccessibilityExtraLarge]) {
     return ax3 / l;
-  else if ([category isEqualToString:UIContentSizeCategoryAccessibilityExtraExtraLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryAccessibilityExtraExtraLarge]) {
     return ax4 / l;
-  else if ([category isEqualToString:UIContentSizeCategoryAccessibilityExtraExtraExtraLarge])
+  } else if ([category isEqualToString:UIContentSizeCategoryAccessibilityExtraExtraExtraLarge]) {
     return ax5 / l;
-  else
+  } else {
     return 1.0;
+  }
 }
 
 - (BOOL)isAlwaysUse24HourFormat {
